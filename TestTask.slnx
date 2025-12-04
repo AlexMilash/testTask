@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="TestTask.HackerRankClient/TestTask.HackerRankClient.csproj" />
+  <Project Path="TestTask.PostingsClient.Contracts/TestTask.PostingsClient.Contracts.csproj" />
+  <Project Path="TestTask/TestTask.csproj" />
+</Solution>
