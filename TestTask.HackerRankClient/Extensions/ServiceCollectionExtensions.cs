@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Polly;
+using Polly.Extensions.Http;
 using System.Net.Http;
 using TestTask.HackerRankClient.Contracts;
 using TestTask.PostingsClient.Contracts;
@@ -14,7 +16,8 @@ namespace TestTask.HackerRankClient.Extensions
             collection.AddHttpClient<HackerRankPostingsService>(client =>
             {
                 client.BaseAddress = new Uri(baseUrl);
-            });
+            })
+            .AddPolicyHandler(GetRetryPolicy());
 
             collection.AddTransient<IHackerRankPostingsService, HackerRankPostingsService>();
             collection.AddTransient<IHackerRankPostingsClient, HackerRankPostingsClient>();
@@ -24,5 +27,16 @@ namespace TestTask.HackerRankClient.Extensions
 
             return collection;
         }
+
+        static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError() // 5xx, 408, network errors
+                .OrResult(msg => (int)msg.StatusCode == 429)  // Retry on TooManyRequests
+                .WaitAndRetryAsync(3, retryAttempt =>
+                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+                );
+        }
+
     }
 }
